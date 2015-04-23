@@ -1,0 +1,264 @@
+##### Function to be used in Question One and Two
+
+Odds <- function(logmean,logst,n,safelevel,observedmean,standard_deviation){
+  
+  mean <- exp(logmean+ 0.5*logst^2)
+  std <- (exp(logst^2)-1)^0.5*mean
+  
+  theta <- rlnorm(20000, logmean, logst)
+  xbar<- rnorm(theta, standard_deviation/(n^.5))
+  
+  simulatedmean<- mean(theta)
+  simulatedstd<- sd(theta)
+  
+  
+  #little_interval
+  lowerbound <- observedmean*(1-.1) 
+  upperbound <- observedmean*(1+.1)
+  
+  
+  #Mean in the Interval (D)
+  meanint<-vector()
+  index = vector()
+  for( i in 1: length(theta)){
+    if ((xbar[i] > lowerbound & xbar[i] <= upperbound)){
+      meanint[i]<-theta[i]
+      index[i] = 0
+    }else{
+      meanint[i]<-NA
+      index[i] = i
+    }
+  }
+  
+  
+  #mean in little interval (#(theta|data))
+  meanintcount<-vector()
+  for( i in 1: length(theta)){
+    if (xbar[i] > lowerbound & xbar[i]< upperbound){
+      meanintcount[i]<-1 
+    }else{
+      meanintcount[i]<-0
+    }
+  }
+  
+  theta_given_data<-sum(meanintcount)
+  
+  ### #(theta)
+  total_theta<- length(theta)
+  
+  
+  #theta less than safe level (#(Ho))
+  count<-vector()
+  for (i in 1: length(theta)){
+    if (theta[i] <= safelevel){
+      count[i]<-1
+    }else{
+      count[i]<-0
+    }
+  }
+  
+  
+  thetacount<- sum(count)
+  
+  #(H1)
+  h1 <- total_theta - theta_given_data
+  
+  ### #(Ho&Data)
+  Ho_given_data<- vector()
+  meanint = meanint[-index]
+  len = as.numeric(length(meanint))
+  Ho_and_data<- vector()
+  for(i in 1 : length(meanint)){
+    if (meanint[i] <= safelevel){
+      Ho_given_data[i]<- 1
+    } else {
+      Ho_given_data[i]<- 0
+    }
+  }
+  Ho_given_data_count<- sum(Ho_given_data)
+  
+  ###(H1 and data)
+  H1_and_data<- theta_given_data - Ho_given_data_count
+  
+  ####Prior
+  ## P(Ho)
+  PHo<- thetacount/total_theta
+  
+  ##Pr(Data|Ho)
+  prdataho<- Ho_given_data_count/ thetacount
+  
+  ## P(h1)
+  PH1 = 1 - PHo
+  
+  ##Pr(Data|H1)
+  pdH1<- H1_and_data/h1
+  
+  ##Prior Odds
+  PriorOdds<- PHo/PH1
+  lnPrior<- log(PriorOdds)
+  
+  ##Bayes Factor
+  Bayes<- prdataho/pdH1
+  lnBayes<- log(Bayes)
+  
+  #Posterior Odds
+  posterior<- PriorOdds*Bayes
+  lnposterior<- log(posterior)
+  
+  ##P(Ho|data)
+  PHo_given_data<- posterior/(1+posterior)
+  
+  part1 = c("Bayes", "Posterior", "PriorOdds", "Ho given Data")
+  part2 = c(Bayes,posterior,PriorOdds, PHo_given_data)
+  part3 = rbind(end1,end2)
+  
+  return(part3)
+}  
+
+###Question One
+
+Odds(-4.98, .95, 30, .01, .0472667, .14)
+
+
+####Question Two
+Odds(-2.12, 1.34, 30, .09, .052, .028)
+
+
+##Question Three
+p<-vector()
+
+ttest<- vector()
+theta_half<- runif(20000,0,1)
+theta<- vector()
+sample<- rnorm(20000,0,1)
+  for ( i in 1: length(sample)){
+    if (sample[i] <= 0){
+      theta[i] <- theta_half[i]
+    }else{
+      theta[i]<-0
+    }
+  }
+xbar<- rnorm(20000,theta, 5/100^.5)
+
+tstat<- vector()
+for ( i in 1 : 20000){
+  tstat[i]<- (xbar[i])/(5/(100^.5))
+}
+
+tcount<- vector()
+for ( i in 1 : length(tstat)){
+  if (tstat[i] > 1.64 & tstat[i] <= 1.68){
+    tcount[i]<- 1
+  } else{
+    tcount[i]<- 0
+  }
+}
+
+n_tcount<- sum(tcount)
+for( i in 1: 20000){
+  p[i]<- pt(tstat[i], 19999)
+}
+
+pcount <- vector()
+for (i in 1 : length(p)){
+  if (p[i] == .05){
+    pcount <- 1
+  }else{
+    pcount <- 0
+  }
+}
+pcount<- sum(pcount)
+
+thetacheck<- vector()
+index = vector()
+for ( i in 1 : 20000){
+  if (tcount[i] == 1) {
+    thetacheck[i] <- theta[i]
+    index[i] = 0
+  } else {
+    index[i] = i
+  }
+}
+
+thetacheck <- thetacheck[-index]
+
+count_thetacheck<-vector()
+for ( i in 1:length(thetacheck)){
+  if( thetacheck[i] == 0){
+    count_thetacheck[i] <- 1
+  }else{
+    count_thetacheck[i]<-0
+  }  
+}
+count_thetacheck <- sum(count_thetacheck)
+percent<- count_thetacheck/n_tcount
+
+#Question Four
+p<-vector()
+
+ttest<- vector()
+theta_half<- runif(20000,0,1)
+theta<- vector()
+sample<- rnorm(20000,0,1)
+for ( i in 1: length(sample)){
+  if (sample[i] <= 0){
+    theta[i] <- theta_half[i]
+  }else{
+    theta[i]<-0
+  }
+}
+xbar<- rnorm(20000,theta, 5/100^.5)
+
+tstat<- vector()
+for ( i in 1 : 20000){
+  tstat[i]<- (xbar[i])/(5/(100^.5))
+}
+
+tcount<- vector()
+for ( i in 1 : length(tstat)){
+  if (tstat[i] > 2.326 & tstat[i] <= 2.366){
+    tcount[i]<- 1
+  } else{
+    tcount[i]<- 0
+  }
+}
+
+n_tcount<- sum(tcount)
+for( i in 1: 20000){
+  p[i]<- pt(tstat[i], 19999)
+}
+
+pcount <- vector()
+for (i in 1 : length(p)){
+  if (p[i] == .05){
+    pcount <- 1
+  }else{
+    pcount <- 0
+  }
+}
+pcount<- sum(pcount)
+
+thetacheck<- vector()
+index = vector()
+for ( i in 1 : 20000){
+  if (tcount[i] == 1) {
+    thetacheck[i] <- theta[i]
+    index[i] = 0
+  } else {
+    index[i] = i
+  }
+}
+
+thetacheck <- thetacheck[-index]
+
+count_thetacheck<-vector()
+for ( i in 1:length(thetacheck)){
+  if( thetacheck[i] == 0){
+    count_thetacheck[i] <- 1
+  }else{
+    count_thetacheck[i]<-0
+  }  
+}
+count_thetacheck <- sum(count_thetacheck)
+percent<- count_thetacheck/n_tcount
+
