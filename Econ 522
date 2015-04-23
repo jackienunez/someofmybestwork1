@@ -1,0 +1,87 @@
+data<- read.csv("/Users/jackienunez/Desktop/us_macro.csv")
+
+#### Question Two
+##Part a
+
+x<- c()
+V<- c()
+Stock_Prices_SV<-function(delta,Xo,sigma,mu){
+  for (i in 2:1000){
+    x[1]<-Xo
+    x[i]<- x[i-1] + x[i-1]*mu*delta + x[i-1]*sigma*rnorm(1,0,1)
+  }
+  return(x)
+}
+price2<-Stock_Prices_SV(1,1000,.01,.0004)
+plot(price2, type='l')
+
+logreturns2<- vector()
+for (i in 1:999){
+  logreturns2[i+1]<- log(price2[i+1])-log(price2[i])
+}
+plot(logreturns2, type='l')
+
+#second way to do part a
+# Stock_Prices_GBM <- function(mu,sigma,Xo,t){
+#      W<- cumsum(rnorm(t,0,1))
+#     E<- (mu-((sigma^2)/2)*t + sigma*W)
+#     X<- Xo * exp(E)
+#     return(X)
+# }
+# 
+# price1<-Stock_Prices_GBM(.0004,.01,1000, (1:1000))
+# plot(price1,type='l')
+# 
+# logreturns<- vector()
+# for (i in 1:999){
+#   logreturns[i+1]<- log(price1[i+1])-log(price1[i])
+# }
+# plot (logreturns, type='l')
+
+##Part b
+x<- c()
+V<- c()
+Stock_Prices_SV<-function(delta,Xo,v,sigmax,phi,sigmav,mu,t){
+ for (i in 2:1000){
+   V[1]<- 0
+   V[i]<-V[i-1]+ phi*V[i-1]*delta + sigmav*rnorm(1,0,1)
+   x[1]<-1000
+   x[i]<- x[i-1] + x[i-1]*mu*delta + x[i-1]*sigmax*(sqrt(exp(V[i]/2)*delta))*rnorm(1,0,1)
+ }
+  return(x)
+}
+price2<-Stock_Prices_SV(1,1000,0,.01,-.03,.1,.0004, (1:1000))
+plot(price2, type='l')
+
+logreturns2<- vector()
+for (i in 1:999){
+  logreturns2[i+1]<- log(price2[i+1])-log(price2[i])
+}
+plot(logreturns2, type='l')
+
+#compare results to real data from apple
+data_compare <- read.csv("/Users/jackienunez/Desktop/appledata.csv")
+price_apple<- data_compare[,7]
+plot(price_apple, type ="l")
+ 
+
+
+
+####Question Three
+X<- vector()
+#mu<- rnorm(1,.0004,.0001^2)
+#sigma<-rnorm(1, 0.01,0.002^2)
+
+Forecast_distribution<-function (mu, sigma,t,Xo){
+  for (i in 1: 10000){
+    E<- rnorm(1, ((mu)-(sigma^2)/2)*t, sqrt((sigma^2)*t))
+    X[i]<- Xo * exp(E)
+  }
+  return(X)
+}
+forecast_distribution<-Forecast_distribution(rnorm(1,.0004,.0001^2),rnorm(1, 0.01,0.002^2),750, 1000)
+mean_distribution<-mean(forecast_distribution)
+StDev_distribution <-sd(forecast_distribution)
+
+hist(forecast_distribution)
+
